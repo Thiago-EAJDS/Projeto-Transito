@@ -387,7 +387,7 @@ public class Car {
         return maxMovements;
     }
 
-    // MODIFICADO: Método para obter forma visual do carro com cores mais claras
+    // Método para obter forma visual do carro com cores mais claras
     public javafx.scene.shape.Shape getCarShape() {
         // Criar um retângulo para representar o carro
         javafx.scene.shape.Rectangle carShape = new javafx.scene.shape.Rectangle(x - 3, y - 3, 6, 6);
