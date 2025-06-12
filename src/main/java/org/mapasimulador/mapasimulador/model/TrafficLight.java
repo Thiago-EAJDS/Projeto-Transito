@@ -1,4 +1,5 @@
 package org.mapasimulador.mapasimulador.model;
+
 import javafx.animation.Timeline;
 import javafx.animation.KeyFrame;
 import javafx.util.Duration;
@@ -8,14 +9,8 @@ public class TrafficLight {
     public enum State {
         GREEN, RED
     }
-    
-    // Estados para as duas direções do cruzamento
-    public enum Direction {
-        HORIZONTAL, VERTICAL
-    }
-    
-    private State currentState; // Estado para compatibilidade com código existente
-    private Direction activeDirection; // Qual direção está com sinal verde
+
+    private State currentState;
     private Timeline timeline;
     private static final Random random = new Random();
     
@@ -25,13 +20,29 @@ public class TrafficLight {
     private static final double MIN_RED_TIME = 3.0;
     private static final double MAX_RED_TIME = 3.0;
     
+    // Referência para o semáforo oposto no cruzamento
+    private TrafficLight oppositeLight;
+
     public TrafficLight() {
-        // Direção inicial aleatória
-        this.activeDirection = random.nextBoolean() ? Direction.HORIZONTAL : Direction.VERTICAL;
-        this.currentState = State.GREEN; // A direção ativa sempre começa verde
+        // Estado inicial aleatório
+        this.currentState = random.nextBoolean() ? State.GREEN : State.RED;
+    }
+    
+    // Método para conectar os semáforos do cruzamento
+    public void setOppositeLight(TrafficLight oppositeLight) {
+        this.oppositeLight = oppositeLight;
+    }
+    
+    // Método para iniciar o semáforo principal do cruzamento
+    public void startAsMaster() {
         startCycle();
     }
     
+    // Método para iniciar como semáforo subordinado
+    public void startAsSlave() {
+        // controlado pelo controller
+    }
+
     private void startCycle() {
         if (timeline != null) {
             timeline.stop();
@@ -40,11 +51,21 @@ public class TrafficLight {
         double duration = getCurrentStateDuration();
         timeline = new Timeline(new KeyFrame(Duration.seconds(duration), e -> {
             switchState();
+            // Sincroniza o semáforo oposto
+            if (oppositeLight != null) {
+                oppositeLight.syncSwitchState();
+            }
             startCycle(); // Reinicia o ciclo
         }));
         timeline.play();
     }
     
+    // Método para sincronizar mudança de estado (usado pelo semáforo oposto)
+    private void syncSwitchState() {
+        // Muda para o estado oposto do semáforo master
+        currentState = (currentState == State.GREEN) ? State.RED : State.GREEN;
+    }
+
     private double getCurrentStateDuration() {
         if (currentState == State.GREEN) {
             return MIN_GREEN_TIME + random.nextDouble() * (MAX_GREEN_TIME - MIN_GREEN_TIME);
@@ -52,61 +73,26 @@ public class TrafficLight {
             return MIN_RED_TIME + random.nextDouble() * (MAX_RED_TIME - MIN_RED_TIME);
         }
     }
-    
+
     private void switchState() {
-        if (currentState == State.GREEN) {
-            // Se estava verde, muda para vermelho (período de transição)
-            currentState = State.RED;
-        } else {
-            // Se estava vermelho, muda para verde e troca a direção ativa
-            currentState = State.GREEN;
-            activeDirection = (activeDirection == Direction.HORIZONTAL) ? 
-                             Direction.VERTICAL : Direction.HORIZONTAL;
-        }
+        currentState = (currentState == State.GREEN) ? State.RED : State.GREEN;
     }
-    
-    // Métodos existentes mantidos para compatibilidade
+
     public State getCurrentState() {
         return currentState;
     }
-    
+
     public boolean isGreen() {
         return currentState == State.GREEN;
     }
-    
+
     public boolean isRed() {
         return currentState == State.RED;
     }
-    
-    // Novos métodos para verificar estado específico de cada direção
-    public boolean isHorizontalGreen() {
-        return currentState == State.GREEN && activeDirection == Direction.HORIZONTAL;
-    }
-    
-    public boolean isHorizontalRed() {
-        return currentState == State.RED || activeDirection == Direction.VERTICAL;
-    }
-    
-    public boolean isVerticalGreen() {
-        return currentState == State.GREEN && activeDirection == Direction.VERTICAL;
-    }
-    
-    public boolean isVerticalRed() {
-        return currentState == State.RED || activeDirection == Direction.HORIZONTAL;
-    }
-    
-    public Direction getActiveDirection() {
-        return activeDirection;
-    }
-    
+
     public void stop() {
         if (timeline != null) {
             timeline.stop();
         }
     }
-    
-    // Método para sincronizar semáforos (opcional PS: NÃO FOI USADO NO FIM DAS CONTAS)
-    // public void setState(State state) {
-    //   this.currentState = state;
-    // }
 }
