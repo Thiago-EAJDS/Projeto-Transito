@@ -3,6 +3,9 @@ package org.mapasimulador.mapasimulador.model;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.util.Duration;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.List;
 import java.util.Random;
 
 public class Car {
@@ -24,6 +27,7 @@ public class Car {
     private int movementCount; // Contador de movimentos
     private int maxMovements; // Máximo de movimentos antes de considerar chegada
     private static final Random random = new Random();
+    private final Deque<Edge> route = new ArrayDeque<>(); // trechos ainda a percorrer
 
     // Constantes para detecção de colisão
     private static final double CAR_SIZE = 6.0; // Tamanho do carro para colisão
@@ -107,6 +111,25 @@ public class Car {
             retryTimer.stop();
             retryTimer = null;
         }
+    }
+
+    // Rota calculada pelo RoutePlanner
+    public void setRoute(List<Edge> edges) {
+        route.clear();
+        route.addAll(edges);
+    }
+
+    public boolean hasRoute() {
+        return !route.isEmpty();
+    }
+
+    public Edge peekNextEdge() {
+        return route.peekFirst();
+    }
+
+    // Chamado quando o carro efetivamente começou a percorrer o próximo trecho
+    public void advanceRoute() {
+        route.pollFirst();
     }
 
     // Semáforo do nó de destino para o eixo pelo qual o carro chega

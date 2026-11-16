@@ -19,7 +19,7 @@ A interface gráfica, construída com **JavaFX**, permite visualizar o mapa e os
 - 🗺️ Visualização do mapa de vias em interface gráfica
 - 🚗 Simulação de veículos se movendo pelo grafo de vias
 - ⚙️ Configuração dos parâmetros da simulação via interface
-- 🔍 Cálculo de rotas com algoritmo de menor caminho (Dijkstra / BFS)
+- 🔍 Rotas dos veículos calculadas com o algoritmo de Dijkstra
 - 📦 Gerenciamento de veículos com filas e listas
 - 💾 Serialização de dados com JSON (Gson)
 
@@ -40,9 +40,9 @@ A interface gráfica, construída com **JavaFX**, permite visualizar o mapa e os
 O projeto aplica na prática conceitos fundamentais de estruturas de dados:
 
 - **Grafos** — representação do mapa de vias (vértices = cruzamentos, arestas = trechos de rua)
-- **Algoritmo de menor caminho** — cálculo das rotas percorridas pelos veículos (Dijkstra / BFS)
+- **Algoritmo de Dijkstra** — cálculo das rotas percorridas pelos veículos (`model/RoutePlanner.java`)
 - **Filas e Listas** — controle e gerenciamento do fluxo de veículos
-- **Árvores** — estruturação hierárquica de dados da simulação
+- **Árvores** — a execução do Dijkstra gera uma árvore de caminhos mínimos, usada para reconstruir as rotas; a fila de prioridade é um heap binário
 
 ---
 

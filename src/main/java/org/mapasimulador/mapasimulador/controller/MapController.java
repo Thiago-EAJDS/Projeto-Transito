@@ -41,6 +41,10 @@ public class MapController {
     // Sistema de monitoramento de congestionamento
     private CongestionMonitor congestionMonitor;
 
+    // Calcula rotas dos carros com Dijkstra
+    private RoutePlanner routePlanner;
+    private static final int ROUTE_ATTEMPTS = 3; // tentativas de achar um destino alcançável
+
     public MapController() {
         this.cars = new ArrayList<>();
         // Inicializar monitor de congestionamento
@@ -230,6 +234,8 @@ public class MapController {
                 }
                 node.getTrafficLight().start();
             }
+
+            routePlanner = new RoutePlanner(mapData);
 
             // Registrar semáforos no monitor de congestionamento
             initializeCongestionMonitoring();
@@ -539,19 +545,22 @@ public class MapController {
                     continue;
                 }
 
-                List<Edge> outgoingEdges = mapData.getEdgesFromNode(currentNode.getId());
-                if (outgoingEdges.isEmpty()) {
+                Edge selectedEdge = chooseNextEdge(car, currentNode);
+                if (selectedEdge == null) {
                     System.out.println("Carro chegou ao destino final (nó sem saída): " + currentNode.getId());
                     continue;
                 }
 
-                Edge selectedEdge = outgoingEdges.get(random.nextInt(outgoingEdges.size()));
                 Node targetNode = mapData.getNodeById(selectedEdge.getTarget());
 
                 if (targetNode != null) {
                     if (canCarMoveTo(car, currentNode, targetNode)) {
                         System.out.println("Carro tentando mover de " + currentNode.getId() + " para " + targetNode.getId());
                         car.moveTo(targetNode, currentNode, selectedEdge, mapData);
+                        // Só avança a rota se o carro realmente começou (ou aguarda) esse trecho
+                        if (car.isBusy()) {
+                            car.advanceRoute();
+                        }
                     } else {
                         System.out.println("Carro aguardando - caminho bloqueado para " + targetNode.getId());
                     }
@@ -565,6 +574,40 @@ public class MapController {
         for (Car car : carsToRemove) {
             car.stop();
             cars.remove(car);
+        }
+    }
+
+    // Próximo trecho do carro: o da rota Dijkstra; sem rota válida, um trecho aleatório
+    private Edge chooseNextEdge(Car car, Node currentNode) {
+        Edge planned = car.peekNextEdge();
+        if (planned == null || !planned.getSource().equals(currentNode.getId())) {
+            planRoute(car, currentNode);
+            planned = car.peekNextEdge();
+        }
+        if (planned != null) {
+            return planned;
+        }
+
+        List<Edge> outgoingEdges = mapData.getEdgesFromNode(currentNode.getId());
+        return outgoingEdges.isEmpty() ? null : outgoingEdges.get(random.nextInt(outgoingEdges.size()));
+    }
+
+    // Sorteia destinos alcançáveis e guarda o caminho mínimo até o primeiro que funcionar
+    private void planRoute(Car car, Node currentNode) {
+        car.setRoute(List.of());
+        List<Node> nodes = mapData.getNodes();
+
+        for (int attempt = 0; attempt < ROUTE_ATTEMPTS; attempt++) {
+            Node destination = nodes.get(random.nextInt(nodes.size()));
+            if (destination.getId().equals(currentNode.getId())) {
+                continue;
+            }
+
+            List<Edge> path = routePlanner.shortestPath(currentNode.getId(), destination.getId());
+            if (!path.isEmpty()) {
+                car.setRoute(path);
+                return;
+            }
         }
     }
 
