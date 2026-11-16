@@ -7,75 +7,56 @@ import java.util.Random;
 
 public class TrafficLight {
     public enum State {
-        GREEN, RED
+        GREEN, YELLOW, RED
     }
 
     private State currentState;
     private Timeline timeline;
     private static final Random random = new Random();
-    
-    // Tempos em segundos
-    private static final double MIN_GREEN_TIME = 6.0;
-    private static final double MAX_GREEN_TIME = 6.0;
-    private static final double MIN_RED_TIME = 3.0;
-    private static final double MAX_RED_TIME = 3.0;
-    
-    // Referência para o semáforo oposto no cruzamento
-    private TrafficLight oppositeLight;
+
+    // Tempos de cada fase em segundos (ciclo: verde -> amarelo -> vermelho)
+    private static final double GREEN_TIME = 6.0;
+    private static final double YELLOW_TIME = 2.0;
+    private static final double RED_TIME = 4.0;
 
     public TrafficLight() {
-        // Estado inicial aleatório
-        this.currentState = random.nextBoolean() ? State.GREEN : State.RED;
+        // Estado inicial aleatório (defasagem entre cruzamentos)
+        State[] states = State.values();
+        this.currentState = states[random.nextInt(states.length)];
     }
-    
-    // Método para conectar os semáforos do cruzamento
-    public void setOppositeLight(TrafficLight oppositeLight) {
-        this.oppositeLight = oppositeLight;
-    }
-    
-    // Método para iniciar o semáforo principal do cruzamento
+
+    // Método para iniciar o ciclo do semáforo
     public void startAsMaster() {
         startCycle();
-    }
-    
-    // Método para iniciar como semáforo subordinado
-    public void startAsSlave() {
-        // controlado pelo controller
     }
 
     private void startCycle() {
         if (timeline != null) {
             timeline.stop();
         }
-        
+
         double duration = getCurrentStateDuration();
         timeline = new Timeline(new KeyFrame(Duration.seconds(duration), e -> {
             switchState();
-            // Sincroniza o semáforo oposto
-            if (oppositeLight != null) {
-                oppositeLight.syncSwitchState();
-            }
-            startCycle(); // Reinicia o ciclo
+            startCycle(); // Reinicia o ciclo com a duração da nova fase
         }));
         timeline.play();
     }
-    
-    // Método para sincronizar mudança de estado (usado pelo semáforo oposto)
-    private void syncSwitchState() {
-        // Muda para o estado oposto do semáforo master
-        currentState = (currentState == State.GREEN) ? State.RED : State.GREEN;
-    }
 
     private double getCurrentStateDuration() {
-        if (currentState == State.GREEN) {
-            return MIN_GREEN_TIME + random.nextDouble() * (MAX_GREEN_TIME - MIN_GREEN_TIME);
-        } else {
-            return MIN_RED_TIME + random.nextDouble() * (MAX_RED_TIME - MIN_RED_TIME);
+        switch (currentState) {
+            case GREEN:  return GREEN_TIME;
+            case YELLOW: return YELLOW_TIME;
+            default:     return RED_TIME;
         }
     }
 
     private void switchState() {
-        currentState = (currentState == State.GREEN) ? State.RED : State.GREEN;
+        switch (currentState) {
+            case GREEN:  currentState = State.YELLOW; break;
+            case YELLOW: currentState = State.RED;    break;
+            default:     currentState = State.GREEN;  break;
+        }
     }
 
     public State getCurrentState() {
@@ -86,8 +67,13 @@ public class TrafficLight {
         return currentState == State.GREEN;
     }
 
+    public boolean isYellow() {
+        return currentState == State.YELLOW;
+    }
+
+    // Amarelo conta como parada para carros que ainda não iniciaram o movimento
     public boolean isRed() {
-        return currentState == State.RED;
+        return currentState != State.GREEN;
     }
 
     public void stop() {

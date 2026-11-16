@@ -464,11 +464,6 @@ public class MapView {
             trafficLight.setStrokeWidth(2);
             updateTrafficLightColor(trafficLight, node.getTrafficLight());
 
-            // Efeito de brilho para semáforos
-            DropShadow lightGlow = new DropShadow();
-            lightGlow.setRadius(8);
-            lightGlow.setColor(node.getTrafficLight().isGreen() ? Color.web("#27ae60") : Color.web("#e74c3c"));
-            trafficLight.setEffect(lightGlow);
 
             trafficLightsGroup.getChildren().add(trafficLight);
             trafficLightCircles.put(node.getId(), trafficLight);
@@ -507,21 +502,20 @@ public class MapView {
     }
 
     private void updateTrafficLightColor(Circle trafficLight, TrafficLight light) {
+        String color;
         if (light.isGreen()) {
-            trafficLight.setFill(Color.web("#27ae60"));
-            // Atualizar efeito de brilho
-            DropShadow greenGlow = new DropShadow();
-            greenGlow.setRadius(8);
-            greenGlow.setColor(Color.web("#27ae60"));
-            trafficLight.setEffect(greenGlow);
+            color = "#27ae60";
+        } else if (light.isYellow()) {
+            color = "#f1c40f";
         } else {
-            trafficLight.setFill(Color.web("#e74c3c"));
-            // Atualizar efeito de brilho
-            DropShadow redGlow = new DropShadow();
-            redGlow.setRadius(8);
-            redGlow.setColor(Color.web("#e74c3c"));
-            trafficLight.setEffect(redGlow);
+            color = "#e74c3c";
         }
+        trafficLight.setFill(Color.web(color));
+        // Atualizar efeito de brilho
+        DropShadow glow = new DropShadow();
+        glow.setRadius(8);
+        glow.setColor(Color.web(color));
+        trafficLight.setEffect(glow);
     }
 
     private void startUpdateTimer() {
