@@ -568,7 +568,7 @@ public class MapView {
 
         // Obter contador de carros que chegaram do controller
         if (controller != null) {
-            arrivedCars = controller.getArrivedCarsCount(); // Este método precisa ser implementado no MapController
+            arrivedCars = controller.getArrivedCarsCount();
         }
 
         carCountLabel.setText("🚗 Carros: " + totalCars);
