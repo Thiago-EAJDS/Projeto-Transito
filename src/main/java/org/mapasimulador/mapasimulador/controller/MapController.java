@@ -341,6 +341,11 @@ public class MapController {
         congestionMonitor.reset();
         initializeCongestionMonitoring();
 
+        // stopSimulation() para os semáforos; reinicia-los para que voltem a ciclar
+        for (Node node : mapData.getNodes()) {
+            node.getTrafficLight().startAsMaster();
+        }
+
         startCarSpawning();
         startCarMovement();
         startCarRemoval();
