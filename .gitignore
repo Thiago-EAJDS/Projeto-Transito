@@ -36,3 +36,7 @@ build/
 
 ### Mac OS ###
 .DS_Store
+### Arquivos de projeto locais do IntelliJ ###
+.idea/misc.xml
+.idea/uiDesigner.xml
+.idea/vcs.xml
