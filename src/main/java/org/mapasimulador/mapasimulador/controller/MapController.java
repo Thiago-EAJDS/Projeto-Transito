@@ -64,6 +64,19 @@ public class MapController {
         private static final double CONGESTION_THRESHOLD_LOW = 30.0;
         private static final double CONGESTION_THRESHOLD_MEDIUM = 60.0;
 
+        // Único ponto de classificação do congestionamento (nível e cor)
+        static String levelOf(double percentage) {
+            if (percentage <= CONGESTION_THRESHOLD_LOW) return "BAIXO";
+            else if (percentage <= CONGESTION_THRESHOLD_MEDIUM) return "MEDIO";
+            else return "ALTO";
+        }
+
+        static String colorOf(double percentage) {
+            if (percentage <= CONGESTION_THRESHOLD_LOW) return "#4CAF50";
+            else if (percentage <= CONGESTION_THRESHOLD_MEDIUM) return "#FF9800";
+            else return "#F44336";
+        }
+
         public CongestionMonitor() {
             this.overallCongestionLevel = 0.0;
             this.totalCars = 0;
@@ -92,17 +105,9 @@ public class MapController {
                 this.congestionPercentage = Math.min(100.0, (cars * 100.0) / MAX_CARS_PER_LIGHT);
             }
 
-            public String getCongestionLevel() {
-                if (congestionPercentage <= CONGESTION_THRESHOLD_LOW) return "BAIXO";
-                else if (congestionPercentage <= CONGESTION_THRESHOLD_MEDIUM) return "MEDIO";
-                else return "ALTO";
-            }
+            public String getCongestionLevel() { return levelOf(congestionPercentage); }
 
-            public String getCongestionColor() {
-                if (congestionPercentage <= CONGESTION_THRESHOLD_LOW) return "#4CAF50";
-                else if (congestionPercentage <= CONGESTION_THRESHOLD_MEDIUM) return "#FF9800";
-                else return "#F44336";
-            }
+            public String getCongestionColor() { return colorOf(congestionPercentage); }
 
             // Getters
             public String getLightId() { return lightId; }
@@ -172,17 +177,9 @@ public class MapController {
             public int getTotalCars() { return totalCars; }
             public List<TrafficLightCongestion> getLights() { return lights; }
 
-            public String getOverallCongestionLevel() {
-                if (overallCongestion <= CONGESTION_THRESHOLD_LOW) return "BAIXO";
-                else if (overallCongestion <= CONGESTION_THRESHOLD_MEDIUM) return "MEDIO";
-                else return "ALTO";
-            }
+            public String getOverallCongestionLevel() { return levelOf(overallCongestion); }
 
-            public String getOverallCongestionColor() {
-                if (overallCongestion <= CONGESTION_THRESHOLD_LOW) return "#4CAF50";
-                else if (overallCongestion <= CONGESTION_THRESHOLD_MEDIUM) return "#FF9800";
-                else return "#F44336";
-            }
+            public String getOverallCongestionColor() { return colorOf(overallCongestion); }
         }
 
         public int getActiveLights() {
