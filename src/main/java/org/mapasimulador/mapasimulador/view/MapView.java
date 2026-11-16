@@ -341,11 +341,7 @@ public class MapView {
         if (!controller.isSimulationRunning()) return;
 
         MapController.CongestionMonitor.CongestionData data = controller.getCongestionData();
-        MapController.CongestionMonitor.TrafficLightCongestion[] lights = data.getLights();
-
-        for (int i = 0; i < data.getLightCount(); i++) {
-            MapController.CongestionMonitor.TrafficLightCongestion light = lights[i];
-
+        for (MapController.CongestionMonitor.TrafficLightCongestion light : data.getLights()) {
             if (light.getCarsWaiting() > 0) {
                 renderCongestionBar(light);
                 renderCarCount(light);

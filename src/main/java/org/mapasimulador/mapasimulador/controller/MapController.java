@@ -9,7 +9,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import javafx.animation.Timeline;
 
@@ -51,9 +53,8 @@ public class MapController {
 
     // Classe para monitoramento de congestionamento
     public static class CongestionMonitor {
-        private TrafficLightCongestion[] trafficLights;
-        private int trafficLightCount;
-        private static final int MAX_TRAFFIC_LIGHTS = 50;
+        private final List<TrafficLightCongestion> trafficLights = new ArrayList<>();
+        private final Map<String, TrafficLightCongestion> trafficLightsById = new HashMap<>();
 
         private double overallCongestionLevel;
         private int totalCars;
@@ -64,8 +65,6 @@ public class MapController {
         private static final double CONGESTION_THRESHOLD_MEDIUM = 60.0;
 
         public CongestionMonitor() {
-            this.trafficLights = new TrafficLightCongestion[MAX_TRAFFIC_LIGHTS];
-            this.trafficLightCount = 0;
             this.overallCongestionLevel = 0.0;
             this.totalCars = 0;
         }
@@ -114,23 +113,14 @@ public class MapController {
             public double getY() { return y; }
         }
 
-        public boolean addTrafficLight(String lightId, double x, double y) {
-            if (trafficLightCount >= MAX_TRAFFIC_LIGHTS) {
-                return false;
-            }
-
-            trafficLights[trafficLightCount] = new TrafficLightCongestion(lightId, x, y);
-            trafficLightCount++;
-            return true;
+        public void addTrafficLight(String lightId, double x, double y) {
+            TrafficLightCongestion light = new TrafficLightCongestion(lightId, x, y);
+            trafficLights.add(light);
+            trafficLightsById.put(lightId, light);
         }
 
         private TrafficLightCongestion findTrafficLight(String lightId) {
-            for (int i = 0; i < trafficLightCount; i++) {
-                if (trafficLights[i].getLightId().equals(lightId)) {
-                    return trafficLights[i];
-                }
-            }
-            return null;
+            return trafficLightsById.get(lightId);
         }
 
         public void updateTrafficLight(String lightId, int carsWaiting, TrafficLight.State state) {
@@ -142,7 +132,7 @@ public class MapController {
         }
 
         private void calculateOverallCongestion() {
-            if (trafficLightCount == 0) {
+            if (trafficLights.isEmpty()) {
                 overallCongestionLevel = 0.0;
                 totalCars = 0;
                 return;
@@ -151,44 +141,36 @@ public class MapController {
             double totalCongestion = 0.0;
             int totalCarsCount = 0;
 
-            for (int i = 0; i < trafficLightCount; i++) {
-                totalCongestion += trafficLights[i].getCongestionPercentage();
-                totalCarsCount += trafficLights[i].getCarsWaiting();
+            for (TrafficLightCongestion light : trafficLights) {
+                totalCongestion += light.getCongestionPercentage();
+                totalCarsCount += light.getCarsWaiting();
             }
 
-            overallCongestionLevel = totalCongestion / trafficLightCount;
+            overallCongestionLevel = totalCongestion / trafficLights.size();
             totalCars = totalCarsCount;
         }
 
         // Getter para dados de congestionamento
         public CongestionData getCongestionData() {
-            return new CongestionData(
-                    overallCongestionLevel,
-                    totalCars,
-                    trafficLights,
-                    trafficLightCount
-            );
+            return new CongestionData(overallCongestionLevel, totalCars, trafficLights);
         }
 
         // Classe para transportar dados
         public static class CongestionData {
             private double overallCongestion;
             private int totalCars;
-            private TrafficLightCongestion[] lights;
-            private int lightCount;
+            private List<TrafficLightCongestion> lights;
 
             public CongestionData(double overallCongestion, int totalCars,
-                                  TrafficLightCongestion[] lights, int lightCount) {
+                                  List<TrafficLightCongestion> lights) {
                 this.overallCongestion = overallCongestion;
                 this.totalCars = totalCars;
                 this.lights = lights;
-                this.lightCount = lightCount;
             }
 
             public double getOverallCongestion() { return overallCongestion; }
             public int getTotalCars() { return totalCars; }
-            public TrafficLightCongestion[] getLights() { return lights; }
-            public int getLightCount() { return lightCount; }
+            public List<TrafficLightCongestion> getLights() { return lights; }
 
             public String getOverallCongestionLevel() {
                 if (overallCongestion <= CONGESTION_THRESHOLD_LOW) return "BAIXO";
@@ -204,13 +186,13 @@ public class MapController {
         }
 
         public int getActiveLights() {
-            return trafficLightCount;
+            return trafficLights.size();
         }
 
         public int getHighCongestionLights() {
             int count = 0;
-            for (int i = 0; i < trafficLightCount; i++) {
-                if (trafficLights[i].getCongestionPercentage() > CONGESTION_THRESHOLD_MEDIUM) {
+            for (TrafficLightCongestion light : trafficLights) {
+                if (light.getCongestionPercentage() > CONGESTION_THRESHOLD_MEDIUM) {
                     count++;
                 }
             }
@@ -218,10 +200,8 @@ public class MapController {
         }
 
         public void reset() {
-            for (int i = 0; i < trafficLightCount; i++) {
-                trafficLights[i] = null;
-            }
-            trafficLightCount = 0;
+            trafficLights.clear();
+            trafficLightsById.clear();
             overallCongestionLevel = 0.0;
             totalCars = 0;
         }
