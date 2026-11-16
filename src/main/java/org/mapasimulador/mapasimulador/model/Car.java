@@ -13,6 +13,7 @@ public class Car {
     private boolean waitingAtTrafficLight;
     private Timeline movementTimeline;
     private Timeline trafficLightCheckTimer;
+    private Timeline retryTimer;
     private double speed; // pixels por segundo
     private Node targetNode;
     private Node currentNode;
@@ -89,17 +90,31 @@ public class Car {
         }
     }
 
+    // Agenda nova tentativa de movimento; é cancelada em stop()
+    private void scheduleRetry(double seconds) {
+        stopRetry();
+        retryTimer = new Timeline(new KeyFrame(Duration.seconds(seconds), e -> {
+            retryTimer = null;
+            if (!moving && !waitingAtTrafficLight && !hasArrived) {
+                moveTo(targetNode, currentNode, currentEdge, mapData);
+            }
+        }));
+        retryTimer.play();
+    }
+
+    private void stopRetry() {
+        if (retryTimer != null) {
+            retryTimer.stop();
+            retryTimer = null;
+        }
+    }
+
     private void startMovement() {
         // Verificar colisão com outros carros antes de se mover
         if (checkCollisionWithOtherCars()) {
             System.out.println("Carro aguardando - rota bloqueada por outro carro");
             // Tentar novamente após um tempo
-            Timeline retryTimer = new Timeline(new KeyFrame(Duration.seconds(0.5), e -> {
-                if (!moving && !waitingAtTrafficLight && !hasArrived) {
-                    moveTo(targetNode, currentNode, currentEdge, mapData);
-                }
-            }));
-            retryTimer.play();
+            scheduleRetry(0.5);
             return;
         }
 
@@ -184,12 +199,7 @@ public class Car {
                             x = currentX;
                             y = currentY;
                             // Tentar reposicionar ou aguardar
-                            Timeline retryTimer = new Timeline(new KeyFrame(Duration.seconds(1.0), retryEvent -> {
-                                if (!moving && !waitingAtTrafficLight && !hasArrived) {
-                                    moveTo(targetNode, currentNode, currentEdge, mapData);
-                                }
-                            }));
-                            retryTimer.play();
+                            scheduleRetry(1.0);
                             return;
                         }
 
@@ -295,6 +305,7 @@ public class Car {
     public void stop() {
         stopMovement();
         stopTrafficLightCheck();
+        stopRetry();
         waitingAtTrafficLight = false;
         hasPassedTrafficLight = false;
         System.out.println("Carro completamente parado");
