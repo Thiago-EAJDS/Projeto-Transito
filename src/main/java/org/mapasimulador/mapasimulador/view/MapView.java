@@ -499,9 +499,9 @@ public class MapView {
 
     private void updateTrafficLightColor(Circle trafficLight, TrafficLight light) {
         String color;
-        if (light.isGreen()) {
+        if (light.getCurrentState() == TrafficLight.State.GREEN) {
             color = "#27ae60";
-        } else if (light.isYellow()) {
+        } else if (light.getCurrentState() == TrafficLight.State.YELLOW) {
             color = "#f1c40f";
         } else {
             color = "#e74c3c";

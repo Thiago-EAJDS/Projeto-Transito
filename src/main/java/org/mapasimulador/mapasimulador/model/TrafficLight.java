@@ -5,75 +5,83 @@ import javafx.animation.KeyFrame;
 import javafx.util.Duration;
 import java.util.Random;
 
+/**
+ * Semáforo de um cruzamento com duas direções conflitantes: norte-sul e leste-oeste.
+ * As fases se alternam assim:
+ * verde NS -> amarelo NS -> tudo vermelho -> verde EW -> amarelo EW -> tudo vermelho.
+ * Assim as duas direções nunca ficam verdes ao mesmo tempo.
+ */
 public class TrafficLight {
     public enum State {
         GREEN, YELLOW, RED
     }
 
-    private State currentState;
-    private Timeline timeline;
+    public enum Approach {
+        NORTH_SOUTH, EAST_WEST
+    }
+
+    // Duração de cada fase do ciclo, em segundos
+    private static final double[] PHASE_DURATIONS = {6.0, 2.0, 1.0, 6.0, 2.0, 1.0};
+    private static final int NS_GREEN_PHASE = 0;
+    private static final int EW_GREEN_PHASE = 3;
     private static final Random random = new Random();
 
-    // Tempos de cada fase em segundos (ciclo: verde -> amarelo -> vermelho)
-    private static final double GREEN_TIME = 6.0;
-    private static final double YELLOW_TIME = 2.0;
-    private static final double RED_TIME = 4.0;
+    private int phase;
+    private Timeline timeline;
 
     public TrafficLight() {
-        // Estado inicial aleatório (defasagem entre cruzamentos)
-        State[] states = State.values();
-        this.currentState = states[random.nextInt(states.length)];
+        // Fase inicial aleatória (defasagem entre cruzamentos)
+        this.phase = random.nextInt(PHASE_DURATIONS.length);
     }
 
-    // Método para iniciar o ciclo do semáforo
-    public void startAsMaster() {
-        startCycle();
+    /** Eixo de aproximação de um carro que segue de {@code from} até {@code to}. */
+    public static Approach approachOf(Node from, Node to) {
+        double dLat = Math.abs(to.getLatitude() - from.getLatitude());
+        // A longitude é corrigida pelo cosseno da latitude para ter a mesma escala de distância
+        double dLon = Math.abs(to.getLongitude() - from.getLongitude())
+                * Math.cos(Math.toRadians(from.getLatitude()));
+        return dLat >= dLon ? Approach.NORTH_SOUTH : Approach.EAST_WEST;
     }
 
-    private void startCycle() {
+    public void start() {
+        startPhase();
+    }
+
+    private void startPhase() {
         if (timeline != null) {
             timeline.stop();
         }
 
-        double duration = getCurrentStateDuration();
-        timeline = new Timeline(new KeyFrame(Duration.seconds(duration), e -> {
-            switchState();
-            startCycle(); // Reinicia o ciclo com a duração da nova fase
+        timeline = new Timeline(new KeyFrame(Duration.seconds(PHASE_DURATIONS[phase]), e -> {
+            phase = (phase + 1) % PHASE_DURATIONS.length;
+            startPhase();
         }));
         timeline.play();
     }
 
-    private double getCurrentStateDuration() {
-        switch (currentState) {
-            case GREEN:  return GREEN_TIME;
-            case YELLOW: return YELLOW_TIME;
-            default:     return RED_TIME;
+    public State stateFor(Approach approach) {
+        int greenPhase = (approach == Approach.NORTH_SOUTH) ? NS_GREEN_PHASE : EW_GREEN_PHASE;
+        if (phase == greenPhase) {
+            return State.GREEN;
         }
-    }
-
-    private void switchState() {
-        switch (currentState) {
-            case GREEN:  currentState = State.YELLOW; break;
-            case YELLOW: currentState = State.RED;    break;
-            default:     currentState = State.GREEN;  break;
+        if (phase == greenPhase + 1) {
+            return State.YELLOW;
         }
-    }
-
-    public State getCurrentState() {
-        return currentState;
-    }
-
-    public boolean isGreen() {
-        return currentState == State.GREEN;
-    }
-
-    public boolean isYellow() {
-        return currentState == State.YELLOW;
+        return State.RED;
     }
 
     // Amarelo conta como parada para carros que ainda não iniciaram o movimento
-    public boolean isRed() {
-        return currentState != State.GREEN;
+    public boolean isGreenFor(Approach approach) {
+        return stateFor(approach) == State.GREEN;
+    }
+
+    public boolean isRedFor(Approach approach) {
+        return stateFor(approach) != State.GREEN;
+    }
+
+    /** Estado do eixo norte-sul, usado para representar o cruzamento na interface. */
+    public State getCurrentState() {
+        return stateFor(Approach.NORTH_SOUTH);
     }
 
     public void stop() {

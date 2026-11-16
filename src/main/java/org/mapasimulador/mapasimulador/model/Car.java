@@ -58,7 +58,7 @@ public class Car {
         this.hasPassedTrafficLight = false; // Reset da flag ao iniciar novo movimento
 
         // Verificar semáforo no nó de destino antes de começar a se mover
-        if (targetNode.getTrafficLight().isRed()) {
+        if (isTargetRed()) {
             System.out.println("Carro esperando semáforo verde no nó: " + targetNode.getId());
             waitAtTrafficLight();
             return;
@@ -72,7 +72,7 @@ public class Car {
 
         // Timer para verificar o semáforo periodicamente
         trafficLightCheckTimer = new Timeline(new KeyFrame(Duration.seconds(0.5), e -> {
-            if (targetNode.getTrafficLight().isGreen()) {
+            if (isTargetGreen()) {
                 System.out.println("Semáforo ficou verde! Carro começando movimento para: " + targetNode.getId());
                 stopTrafficLightCheck();
                 waitingAtTrafficLight = false;
@@ -107,6 +107,15 @@ public class Car {
             retryTimer.stop();
             retryTimer = null;
         }
+    }
+
+    // Semáforo do nó de destino para o eixo pelo qual o carro chega
+    private boolean isTargetRed() {
+        return targetNode.getTrafficLight().isRedFor(TrafficLight.approachOf(currentNode, targetNode));
+    }
+
+    private boolean isTargetGreen() {
+        return targetNode.getTrafficLight().isGreenFor(TrafficLight.approachOf(currentNode, targetNode));
     }
 
     private void startMovement() {
@@ -176,7 +185,7 @@ public class Car {
                     e -> {
                         // Só verificar semáforo se ainda não passou da metade do caminho
                         // e se ainda não passou do semáforo anteriormente
-                        if (progress >= 0.8 && progress < 0.95 && !hasPassedTrafficLight && targetNode.getTrafficLight().isRed()) {
+                        if (progress >= 0.8 && progress < 0.95 && !hasPassedTrafficLight && isTargetRed()) {
                             System.out.println("Semáforo ficou vermelho antes de chegar - parando");
                             stopMovement();
                             // Reposicionar no ponto atual

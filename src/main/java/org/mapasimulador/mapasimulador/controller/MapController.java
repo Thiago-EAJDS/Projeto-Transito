@@ -228,7 +228,7 @@ public class MapController {
                 if (node.getTrafficLight() == null) {
                     node.setTrafficLight(new TrafficLight());
                 }
-                node.getTrafficLight().startAsMaster();
+                node.getTrafficLight().start();
             }
 
             // Registrar semáforos no monitor de congestionamento
@@ -320,7 +320,7 @@ public class MapController {
 
         // stopSimulation() para os semáforos; reinicia-los para que voltem a ciclar
         for (Node node : mapData.getNodes()) {
-            node.getTrafficLight().startAsMaster();
+            node.getTrafficLight().start();
         }
 
         startCarSpawning();
@@ -549,7 +549,7 @@ public class MapController {
                 Node targetNode = mapData.getNodeById(selectedEdge.getTarget());
 
                 if (targetNode != null) {
-                    if (canCarMoveTo(car, targetNode, selectedEdge)) {
+                    if (canCarMoveTo(car, currentNode, targetNode)) {
                         System.out.println("Carro tentando mover de " + currentNode.getId() + " para " + targetNode.getId());
                         car.moveTo(targetNode, currentNode, selectedEdge, mapData);
                     } else {
@@ -568,8 +568,8 @@ public class MapController {
         }
     }
 
-    private boolean canCarMoveTo(Car car, Node targetNode, Edge edge) {
-        if (targetNode.getTrafficLight().isRed()) {
+    private boolean canCarMoveTo(Car car, Node currentNode, Node targetNode) {
+        if (targetNode.getTrafficLight().isRedFor(TrafficLight.approachOf(currentNode, targetNode))) {
             return false;
         }
 
