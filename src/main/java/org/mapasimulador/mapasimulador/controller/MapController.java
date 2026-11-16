@@ -246,11 +246,12 @@ public class MapController {
                 throw new IOException("Dados do mapa inválidos ou incompletos!");
             }
 
-            // Inicializar semáforos para todos os nós
+            // Inicializar semáforos para todos os nós e iniciar seus ciclos
             for (Node node : mapData.getNodes()) {
                 if (node.getTrafficLight() == null) {
                     node.setTrafficLight(new TrafficLight());
                 }
+                node.getTrafficLight().startAsMaster();
             }
 
             // Registrar semáforos no monitor de congestionamento
